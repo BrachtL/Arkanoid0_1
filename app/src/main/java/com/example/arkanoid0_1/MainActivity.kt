@@ -1,5 +1,7 @@
 package com.example.arkanoid0_1
 
+import android.app.Activity
+import android.content.res.Resources
 import android.graphics.Color
 import android.os.*
 import android.util.DisplayMetrics
@@ -80,6 +82,16 @@ class MainActivity : AppCompatActivity() {
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
         val screenHeight = displayMetrics.heightPixels
+        var screenWidth = displayMetrics.widthPixels
+
+        val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        if (resourceId > 0) {
+            val navBarHeight = resources.getDimensionPixelSize(resourceId)
+            // Use navBarHeight as needed
+            screenWidth = screenWidth + navBarHeight
+        }
+
+
 
         val paddle = findViewById<ImageView>(R.id.paddleImage)
 
@@ -102,14 +114,15 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val location = IntArray(2)
+        //val location = IntArray(2)
 
         //read the top left location
-        paddle.getLocationOnScreen(location)
+        //paddle.getLocationOnScreen(location)
 
         //create the edges
-        val x = location[0] + paddle.width / 2
-        val y = location[1] + paddle.height / 2
+        //val x = location[0] + paddle.width / 2
+        //val y = location[1] + paddle.height / 2
+
 
         fun colision(ball: Any) {
             //verify if there is a colision with the paddle or the obstacles(rectangles)
@@ -127,7 +140,8 @@ class MainActivity : AppCompatActivity() {
         handler.post(object : Runnable {
             override fun run() {
                 // Update the position of the ball
-                updateBallPosition(ballImageView, screenHeight)
+                updateBallPosition(ballImageView, screenHeight, screenWidth, paddle)
+
 
                 // Schedule the next update
                 handler.postDelayed(this, updateInterval)
@@ -160,22 +174,56 @@ class MainActivity : AppCompatActivity() {
         var right = location[0] + imageView.width
     }
 
-    fun updateBallPosition(imageView: ImageView, screenHeight: Int) {
 
 
-        var imageViewLocation = mutableListOf<Float>(imageView.x, imageView.y)
-        var imageViewEdges = RectEdges(imageView, imageViewLocation)
 
-        if(imageViewEdges.bottom + (standardSpeedY/2 + 1) >= screenHeight) {
-            standardSpeedY = -standardSpeedY
-        }
 
-        // Move the paddle to the x position of the touch event
-        imageView.x = imageView.x + standardSpeedX
-        imageView.y = imageView.y + standardSpeedY
+    fun updateBallPosition(ball: ImageView, screenHeight: Int, screenWidth: Int, paddle: ImageView) {
 
-        // Move the ball by changing its position on the screen
-        // You can use the setX() and setY() methods to update the position of the ImageView
+        bounceInScreenSides(ball, screenHeight, screenWidth)
+
+        bounceInPaddle(ball, paddle)
+
+
+
+
+
+
     }
 
+}
+
+fun bounceInScreenSides(ball: ImageView, screenHeight: Int, screenWidth: Int) {
+    var ballLocation = mutableListOf<Float>(ball.x, ball.y)
+    var ballEdges = MainActivity.RectEdges(ball, ballLocation)
+
+    if(ballEdges.bottom + (standardSpeedY/2 + 1) >= screenHeight) {
+        standardSpeedY = -standardSpeedY
+    } else if(ballEdges.top + (standardSpeedY/2 - 1) <= 0) {
+        standardSpeedY = -standardSpeedY
+    }
+
+    if(ballEdges.right + (standardSpeedX/2 + 1) >= screenWidth) {
+        standardSpeedX = -standardSpeedX
+    } else if(ballEdges.left + (standardSpeedX/2 - 1) <= 0) {
+        standardSpeedX = -standardSpeedX
+    }
+
+    // Move the paddle to the x position of the touch event
+    ball.x = ball.x + standardSpeedX
+    ball.y = ball.y + standardSpeedY
+}
+
+fun bounceInPaddle(ball: ImageView, paddle: ImageView) {
+    var ballLocation = mutableListOf<Float>(ball.x, ball.y)
+    var ballEdges = MainActivity.RectEdges(ball, ballLocation)
+
+    var paddleLocation = mutableListOf<Float>(paddle.x, paddle.y)
+    var paddleEdges = MainActivity.RectEdges(paddle, paddleLocation)
+
+    if(ballEdges.bottom + (standardSpeedY/2 + 1) >= paddleEdges.top) {
+        if(ballEdges.right >= paddleEdges.left && ballEdges.left <= paddleEdges.right) {
+            standardSpeedY = -standardSpeedY
+        }
+    }
 }
