@@ -49,6 +49,7 @@
     -->
 
 <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/parent_layout"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -65,7 +66,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/paddlered" />
+        app:srcCompat="@drawable/paddlered"/>
 
     <ImageView
         android:id="@+id/ballImage"

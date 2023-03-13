@@ -1,20 +1,16 @@
 package com.example.arkanoid0_1
 
-import android.app.Activity
-import android.content.res.Resources
-import android.graphics.Color
 import android.os.*
 import android.util.DisplayMetrics
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.view.MotionEvent
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.ImageView
-import java.util.concurrent.Executors
-
-
-import android.view.WindowManager
+import android.widget.RelativeLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 
 private var immersiveFlags: Int = 0
 
@@ -62,22 +58,7 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        /*
-        val test: ImageView = findViewById(R.id.imageView)
-        test.y = 100F
-        test.x = -300F
 
-        fun onTouch(event: MotionEvent): Boolean {
-            val x = event.x
-            val y = event.y
-
-            val test: ImageView = findViewById(R.id.imageView)
-            test.x = x
-            test.y = y
-
-            return true
-        }
-        */
 
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -94,6 +75,12 @@ class MainActivity : AppCompatActivity() {
 
 
         val paddle = findViewById<ImageView>(R.id.paddleImage)
+
+
+
+        // TODO:  I need to eliminate those magic numbers
+        generateTiles(9, 4, "rule1", screenWidth, 250,
+            160, 0.6f)
 
         paddle.setOnTouchListener { _, motionEvent ->
             when (motionEvent.action) {
@@ -113,21 +100,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
-        //val location = IntArray(2)
-
-        //read the top left location
-        //paddle.getLocationOnScreen(location)
-
-        //create the edges
-        //val x = location[0] + paddle.width / 2
-        //val y = location[1] + paddle.height / 2
-
-
-        fun colision(ball: Any) {
-            //verify if there is a colision with the paddle or the obstacles(rectangles)
+        // TODO:  Implement this collision function
+        fun collision(ball: Any) {
+            //verify if there is a collision with the paddle or the obstacles(rectangles)
             //which color is the obstacle? (then, change() the color or remove obstacle)
-            //the object of colision is the paddle? (then calculate the speed in order to apply() an effect in the ball)
+            //the object of collision is the paddle? (then calculate the speed in order to apply() an effect in the ball)
 
         }
 
@@ -174,7 +151,130 @@ class MainActivity : AppCompatActivity() {
         var right = location[0] + imageView.width
     }
 
+    fun generateTiles(amountPerLine: Int, lines: Int, rule: String, screenWidth: Int,
+                      marginX: Int, marginY:Int, scale: Float) {
+        //rule will be used to make different stages, with holes, "pictures", etc.
+        //I have to check and decrease the scale if the screen cant handle the amount of tiles
 
+
+        //creating the first ImageView
+        var firstImageView = ImageView(this)
+        firstImageView.setImageResource(R.drawable.element_blue_rectangle)
+        // set other attributes such as layout params, scale type, etc.
+        // for example, to set layout params to match parent:
+
+        val params = ConstraintLayout.LayoutParams(
+            ConstraintLayout.LayoutParams.WRAP_CONTENT,
+            ConstraintLayout.LayoutParams.WRAP_CONTENT
+        )
+
+        params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        //params.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
+        params.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+        //params.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+
+
+        firstImageView.layoutParams = params
+
+        // add the ImageView to a parent view
+        val parentView =
+            findViewById<ConstraintLayout>(R.id.parent_layout)
+        parentView.addView(firstImageView)
+
+
+        params.topMargin = marginY
+        params.leftMargin = marginX
+
+        firstImageView.scaleX = scale
+        firstImageView.scaleY = scale
+
+
+        //I need to create this firstImageView in order to get some values that only exists after
+        //the imageView is created, like width and height attributes
+        firstImageView.viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                //I need this to wait the imageView is created, in order to get its properties
+                override fun onGlobalLayout() {
+                    // Remove the listener to avoid multiple callbacks
+                    firstImageView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                    // Get the width of the ImageView
+                    //Log.d("Trying to get width", "firstImageView.width = ${firstImageView.width}")
+
+                    var distanceBetweenTopLeftCornerX = (screenWidth - 2 * marginX - firstImageView.width)/(amountPerLine-1)
+
+                    var gapX = distanceBetweenTopLeftCornerX - firstImageView.width
+                    var gapY = gapX
+
+
+                    /*
+                    //for debug purposes: gapX is negative in older/smaller smartphones
+                    Log.d("testing rects", "firstImageView.width: ${firstImageView.width}\n" +
+                            "marginY = $marginY\n" +
+                            "firstImageView.height = ${firstImageView.height}")
+                    println("distanceBetweenTopLeftCornerX: ${distanceBetweenTopLeftCornerX}\n" +
+                            "firstImageView.width = ${firstImageView.width}\n" +
+                            "firstImageView.height = ${firstImageView.height}")
+
+                    */
+
+                    if(gapX <= 0) {
+                    //impossible scenario
+                    //I have to change the scale
+                    }
+
+
+                    var rect = mutableListOf<ImageView>()
+                    var k = 0
+                    var j = 0
+
+
+
+                    for(i in 0 until lines) {
+                        while(j < amountPerLine) {
+
+                            rect.add(ImageView(this@MainActivity))
+                            //rect[k] = ImageView(this)
+                            rect[k].setImageResource(R.drawable.element_blue_rectangle)
+                            // set other attributes such as layout params, scale type, etc.
+                            // for example, to set layout params to match parent:
+
+                            val params = ConstraintLayout.LayoutParams(
+                                ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                                ConstraintLayout.LayoutParams.WRAP_CONTENT
+                            )
+
+                            params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                            params.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+
+
+                            rect[k].layoutParams = params
+
+
+                            val parentView = findViewById<ConstraintLayout>(R.id.parent_layout)
+                            parentView.addView(rect[k])
+
+
+                            params.topMargin = marginY + gapY*i + firstImageView.height*i
+                            params.leftMargin = marginX + distanceBetweenTopLeftCornerX*j
+
+                            rect[k].scaleX = scale
+                            rect[k].scaleY = scale
+
+                            k++
+                            j++
+                        }
+                    j = 0
+                    }
+
+
+                }
+            }
+        )
+        //Log.d("Trying to get width", "firstImageView.width = ${firstImageView.width}")
+
+
+    }
 
 
 
@@ -183,7 +283,6 @@ class MainActivity : AppCompatActivity() {
         bounceInScreenSides(ball, screenHeight, screenWidth)
 
         bounceInPaddle(ball, paddle)
-
 
 
 
@@ -227,3 +326,7 @@ fun bounceInPaddle(ball: ImageView, paddle: ImageView) {
         }
     }
 }
+
+
+// TODO: change some orders in the code
+// TODO: substitute some code for functions and classes
