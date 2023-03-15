@@ -18,13 +18,14 @@ private lateinit var ballImageView: ImageView
 private lateinit var handler: Handler
 private const val updateInterval = 16L // Update every 16 milliseconds (approx. 60 FPS)
 
-private var standardSpeedY = 8
-private var standardSpeedX = 8
+private var standardSpeedY = 6
+private var standardSpeedX = 6
 
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         //hiding two bars and nav buttons
         // Set immersive flags to hide the navigation bar and status bar
@@ -39,11 +40,73 @@ class MainActivity : AppCompatActivity() {
         window.decorView.systemUiVisibility = immersiveFlags
     }
 
+
     override fun onResume() {
         super.onResume()
 
         // Re-apply immersive flags when the activity resumes
         window.decorView.systemUiVisibility = immersiveFlags
+    }
+
+    // TODO: Implement this collision function
+    // TODO: gravei um vídeo mostrando uma colisão com standardSpeedX negativo e standardSpeedY positivo que não aconteceu, verificar
+    fun collision(ball: ImageView): Boolean{
+        var ballLocation = mutableListOf<Float>(ball.x, ball.y)
+        var ballEdges = RectEdges(ball, ballLocation)
+
+        for (i in 0 until obstacleRectEdges.size) {
+            //the +1 or -1 in (standardSpeedY / 2 - 1) are been used because it is better the ball going deeper into the obstacle than bouncing earlier
+            //maybe it could be removed
+
+
+            if(standardSpeedY > 0) { //going down
+                    //standardSpeedY / 2 - 1
+                    if(ballEdges.bottom + (standardSpeedY / 2 - 1) >= obstacleRectEdges[i].top && ballEdges.bottom <= obstacleRectEdges[i].top || ballEdges.bottom >= obstacleRectEdges[i].top && ballEdges.bottom - standardSpeedY <= obstacleRectEdges[i].top) {
+                        if(ballEdges.right + standardSpeedX >= obstacleRectEdges[i].left && ballEdges.left + standardSpeedX <= obstacleRectEdges[i].right) {
+                            standardSpeedY = -standardSpeedY
+                            return true
+                        }
+                    }
+            } else { //standardSpeedY < 0 //going up
+                //standardSpeedY / 2 + 1
+                //trocar os top/bottom, >/<, +1/-1
+                if(ballEdges.top + (standardSpeedY / 2 + 1) <= obstacleRectEdges[i].bottom && ballEdges.top >= obstacleRectEdges[i].bottom || ballEdges.top <= obstacleRectEdges[i].bottom && ballEdges.top - standardSpeedY >= obstacleRectEdges[i].bottom) {
+                    if(ballEdges.right + standardSpeedX >= obstacleRectEdges[i].left && ballEdges.left + standardSpeedX <= obstacleRectEdges[i].right) {
+                        standardSpeedY = -standardSpeedY
+                        return true
+                    }
+                }
+            }
+
+
+            //change all X/Y
+            //bottom -> right
+            //top -> left
+            //right -> bottom
+            //left -> top
+            if(standardSpeedX > 0) { //going down
+                //standardSpeedX / 2 - 1
+                if(ballEdges.right + (standardSpeedX / 2 - 1) >= obstacleRectEdges[i].left && ballEdges.right <= obstacleRectEdges[i].left || ballEdges.right >= obstacleRectEdges[i].left && ballEdges.right - standardSpeedX <= obstacleRectEdges[i].left) {
+                    if(ballEdges.bottom + standardSpeedY >= obstacleRectEdges[i].top && ballEdges.top + standardSpeedY <= obstacleRectEdges[i].bottom) {
+                        standardSpeedX = -standardSpeedX
+                        return true
+                    }
+                }
+            } else { //standardSpeedY < 0 //going up
+                //standardSpeedX / 2 + 1
+                if(ballEdges.left + (standardSpeedX / 2 + 1) <= obstacleRectEdges[i].right && ballEdges.left >= obstacleRectEdges[i].right || ballEdges.left <= obstacleRectEdges[i].right && ballEdges.left - standardSpeedX >= obstacleRectEdges[i].right) {
+                    if(ballEdges.bottom + standardSpeedY >= obstacleRectEdges[i].top && ballEdges.top + standardSpeedY <= obstacleRectEdges[i].bottom) {
+                        standardSpeedX = -standardSpeedX
+                        return true
+                    }
+                }
+            }
+
+
+        }
+        //verify if there is a collision with the obstacles(rectangles)
+        //which color is the obstacle? (then, change() the color or remove obstacle)
+        return false
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -57,7 +120,6 @@ class MainActivity : AppCompatActivity() {
 
 
         setContentView(R.layout.activity_main)
-
 
 
         val displayMetrics = DisplayMetrics()
@@ -100,13 +162,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // TODO:  Implement this collision function
-        fun collision(ball: Any) {
-            //verify if there is a collision with the paddle or the obstacles(rectangles)
-            //which color is the obstacle? (then, change() the color or remove obstacle)
-            //the object of collision is the paddle? (then calculate the speed in order to apply() an effect in the ball)
 
-        }
 
         val ballImageView = findViewById<ImageView>(R.id.ballImage)
 
@@ -151,6 +207,10 @@ class MainActivity : AppCompatActivity() {
         var right = location[0] + imageView.width
     }
 
+    var obstacleRectEdges = mutableListOf<RectEdges>()
+    var tempObstacleLocationX = mutableListOf<Float>()
+    var tempObstacleLocationY = mutableListOf<Float>()
+
     fun generateTiles(amountPerLine: Int, lines: Int, rule: String, screenWidth: Int,
                       marginX: Int, marginY:Int, scale: Float) {
         //rule will be used to make different stages, with holes, "pictures", etc.
@@ -160,6 +220,11 @@ class MainActivity : AppCompatActivity() {
         //creating the first ImageView
         var firstImageView = ImageView(this)
         firstImageView.setImageResource(R.drawable.element_blue_rectangle)
+
+        firstImageView.scaleX = scale
+        firstImageView.scaleY = scale
+
+
         // set other attributes such as layout params, scale type, etc.
         // for example, to set layout params to match parent:
 
@@ -185,8 +250,7 @@ class MainActivity : AppCompatActivity() {
         params.topMargin = marginY
         params.leftMargin = marginX
 
-        firstImageView.scaleX = scale
-        firstImageView.scaleY = scale
+
 
 
         //I need to create this firstImageView in order to get some values that only exists after
@@ -219,8 +283,8 @@ class MainActivity : AppCompatActivity() {
                     */
 
                     if(gapX <= 0) {
-                    //impossible scenario
-                    //I have to change the scale
+                        //impossible scenario
+                        //I have to change the scale
                     }
 
 
@@ -228,6 +292,8 @@ class MainActivity : AppCompatActivity() {
                     var k = 0
                     var j = 0
 
+                    //var obstacleRectEdges = mutableListOf<RectEdges>()
+                    //var tempObstacleLocation = mutableListOf<Float>(0f,0f)
 
 
                     for(i in 0 until lines) {
@@ -238,6 +304,9 @@ class MainActivity : AppCompatActivity() {
                             rect[k].setImageResource(R.drawable.element_blue_rectangle)
                             // set other attributes such as layout params, scale type, etc.
                             // for example, to set layout params to match parent:
+
+                            rect[k].scaleX = scale
+                            rect[k].scaleY = scale
 
                             val params = ConstraintLayout.LayoutParams(
                                 ConstraintLayout.LayoutParams.WRAP_CONTENT,
@@ -258,14 +327,49 @@ class MainActivity : AppCompatActivity() {
                             params.topMargin = marginY + gapY*i + firstImageView.height*i
                             params.leftMargin = marginX + distanceBetweenTopLeftCornerX*j
 
-                            rect[k].scaleX = scale
-                            rect[k].scaleY = scale
+
+
+                            tempObstacleLocationY.add(params.topMargin.toFloat())
+                            tempObstacleLocationX.add(params.leftMargin.toFloat())
+
+
 
                             k++
                             j++
+
+
                         }
-                    j = 0
+                        j = 0
                     }
+
+                    rect[rect.size-1].viewTreeObserver.addOnGlobalLayoutListener(
+                        object : ViewTreeObserver.OnGlobalLayoutListener {
+                            //I need this to wait the imageView is created, in order to get its properties
+                            override fun onGlobalLayout() {
+
+                                var height: Float
+                                var width: Float
+
+                                for (k in 0 until rect.size) {
+
+                                    // Remove the listener to avoid multiple callbacks
+                                    rect[k].viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+
+                                    obstacleRectEdges.add(RectEdges(rect[k], mutableListOf<Float>(rect[k].x, rect[k].y)))
+
+                                    height = obstacleRectEdges[k].bottom - obstacleRectEdges[k].top
+                                    width = obstacleRectEdges[k].right - obstacleRectEdges[k].left
+
+                                    obstacleRectEdges[k].top+= (1-scale)*height/2
+                                    obstacleRectEdges[k].bottom-= (1-scale)*height/2
+                                    obstacleRectEdges[k].right-= (1-scale)*width/2
+                                    obstacleRectEdges[k].left+= (1-scale)*width/2
+                                }
+
+                            }
+                        }
+                    )
 
 
                 }
@@ -280,12 +384,15 @@ class MainActivity : AppCompatActivity() {
 
     fun updateBallPosition(ball: ImageView, screenHeight: Int, screenWidth: Int, paddle: ImageView) {
 
-        bounceInScreenSides(ball, screenHeight, screenWidth)
 
         bounceInPaddle(ball, paddle)
+        collision(ball)
 
 
 
+        // TODO: I have to create an independent function for move..
+        // TODO: ..after check if there is an obstacle (that will change the speed sign)
+        bounceInScreenSides(ball, screenHeight, screenWidth)
 
 
     }
@@ -313,7 +420,9 @@ fun bounceInScreenSides(ball: ImageView, screenHeight: Int, screenWidth: Int) {
     ball.y = ball.y + standardSpeedY
 }
 
+//calculate the speed in order to apply() an effect in the ball
 fun bounceInPaddle(ball: ImageView, paddle: ImageView) {
+
     var ballLocation = mutableListOf<Float>(ball.x, ball.y)
     var ballEdges = MainActivity.RectEdges(ball, ballLocation)
 
@@ -328,5 +437,38 @@ fun bounceInPaddle(ball: ImageView, paddle: ImageView) {
 }
 
 
+
+
+
 // TODO: change some orders in the code
 // TODO: substitute some code for functions and classes
+
+// TODO: make the touch in the bottom half side of the screen works as if touches in the paddle
+
+// TODO: create the rectCollision function
+// TODO: create the effect of speed when the paddle touches the ball
+
+// TODO: change the bounce function not to bounce bottom
+// TODO: create defeat function and a system of lives
+
+// TODO: allow multiple balls and create the scenario when more balls come
+
+// TODO: put music
+// TODO: put sound effects
+
+// TODO: create more rules for stages
+
+// TODO: create an online mode, when the players throw things each other
+
+// TODO: create visual effects when the ball hits the rects
+
+// TODO: resolver bug dos tiles colados em celular com telas menores
+// TODO: reoslver bug dos celular que tem nav buttons fixos (tirar a função que desconsidera eles)
+//é possível fazer uma função para desativar isso no menu, mas não é o ideal
+
+// TODO: golpes "especiais" (sinais na tela, multitouch, clicar em algo, itens especiais)
+
+// TODO: construir um BallEdges que faça o contorno de figuras circulares
+// TODO: criar variáveis para armazenar os quadrantes
+// TODO: na função collision, considerar apenas o quadrante que importa, com relação à velocidade
+
