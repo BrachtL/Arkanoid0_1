@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         window.decorView.systemUiVisibility = immersiveFlags
     }
 
-    fun collision(ball: ImageView): Boolean {
+    fun collision(ball: ImageView): Int {
         var ballLocation = mutableListOf<Float>(ball.x, ball.y)
         var ballEdges = RectEdges(ball, ballLocation)
 
@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
                     if(ballEdges.bottom + (ballSpeed.y / 2 - 1) >= obstacleRectEdges[i].top && ballEdges.bottom <= obstacleRectEdges[i].top || ballEdges.bottom >= obstacleRectEdges[i].top && ballEdges.bottom - ballSpeed.y <= obstacleRectEdges[i].top) {
                         if(ballEdges.right + ballSpeed.x >= obstacleRectEdges[i].left && ballEdges.left + ballSpeed.x <= obstacleRectEdges[i].right) {
                             ballSpeed.y = -ballSpeed.y
-                            return true
+                            return i
                         }
                     }
             } else { //ballSpeed.y < 0 //going up
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
                 if(ballEdges.top + (ballSpeed.y / 2 + 1) <= obstacleRectEdges[i].bottom && ballEdges.top >= obstacleRectEdges[i].bottom || ballEdges.top <= obstacleRectEdges[i].bottom && ballEdges.top - ballSpeed.y >= obstacleRectEdges[i].bottom) {
                     if(ballEdges.right + ballSpeed.x >= obstacleRectEdges[i].left && ballEdges.left + ballSpeed.x <= obstacleRectEdges[i].right) {
                         ballSpeed.y = -ballSpeed.y
-                        return true
+                        return i
                     }
                 }
             }
@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
                 if(ballEdges.right + (ballSpeed.x / 2 - 1) >= obstacleRectEdges[i].left && ballEdges.right <= obstacleRectEdges[i].left || ballEdges.right >= obstacleRectEdges[i].left && ballEdges.right - ballSpeed.x <= obstacleRectEdges[i].left) {
                     if(ballEdges.bottom + ballSpeed.y >= obstacleRectEdges[i].top && ballEdges.top + ballSpeed.y <= obstacleRectEdges[i].bottom) {
                         ballSpeed.x = -ballSpeed.x
-                        return true
+                        return i
                     }
                 }
             } else { //ballSpeed.y < 0 //going left
@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                 if(ballEdges.left + (ballSpeed.x / 2 + 1) <= obstacleRectEdges[i].right && ballEdges.left >= obstacleRectEdges[i].right || ballEdges.left <= obstacleRectEdges[i].right && ballEdges.left - ballSpeed.x >= obstacleRectEdges[i].right) {
                     if(ballEdges.bottom + ballSpeed.y >= obstacleRectEdges[i].top && ballEdges.top + ballSpeed.y <= obstacleRectEdges[i].bottom) {
                         ballSpeed.x = -ballSpeed.x
-                        return true
+                        return i
                     }
                 }
             }
@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
         }
         //verify if there is a collision with the obstacles(rectangles)
         //which color is the obstacle? (then, change() the color or remove obstacle)
-        return false
+        return -1
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
 
 
         // TODO:  I need to eliminate those magic numbers
-        generateTiles(9, 4, "rule1", screenWidth, 250,
+        var rect = generateTiles(9, 4, "rule1", screenWidth, 250,
             160, 0.6f)
 
 
@@ -222,7 +222,7 @@ class MainActivity : AppCompatActivity() {
         handler.post(object : Runnable {
             override fun run() {
                 // Update the position of the ball
-                updateBallPosition(ballImageView, screenHeight, screenWidth, paddle)
+                updateBallPosition(ballImageView, screenHeight, screenWidth, paddle, rect)
 
 
                 // Schedule the next update
@@ -234,7 +234,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     //class used to take the edges of any imageView
-    class RectEdges(imageView: ImageView, location: MutableList<Float>) {
+    class RectEdges(imageView: ImageView, location: MutableList<Float>, id: Int = -1) {
         /*
 
         var topLeft = mutableListOf<Float>()
@@ -254,6 +254,7 @@ class MainActivity : AppCompatActivity() {
         var left = location[0]
         var bottom = location [1] + imageView.height
         var right = location[0] + imageView.width
+        var id = id
     }
 
     var obstacleRectEdges = mutableListOf<RectEdges>()
@@ -261,7 +262,7 @@ class MainActivity : AppCompatActivity() {
     var tempObstacleLocationY = mutableListOf<Float>()
 
     fun generateTiles(amountPerLine: Int, lines: Int, rule: String, screenWidth: Int,
-                      marginX: Int, marginY:Int, scale: Float) {
+                      marginX: Int, marginY:Int, scale: Float): MutableList<ImageView> {
         //rule will be used to make different stages, with holes, "pictures", etc.
         //I have to check and decrease the scale if the screen cant handle the amount of tiles
 
@@ -269,6 +270,12 @@ class MainActivity : AppCompatActivity() {
         //creating the first ImageView
         var firstImageView = ImageView(this)
         firstImageView.setImageResource(R.drawable.element_blue_rectangle)
+
+        // Generate a unique ID for the ImageView
+        var id = View.generateViewId();
+
+        // Set the ID for the ImageView
+        firstImageView.id = id;
 
         firstImageView.scaleX = scale
         firstImageView.scaleY = scale
@@ -301,6 +308,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
+        var rect = mutableListOf<ImageView>()
 
         //I need to create this firstImageView in order to get some values that only exists after
         //the imageView is created, like width and height attributes
@@ -337,7 +345,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
 
-                    var rect = mutableListOf<ImageView>()
+                    //var rect = mutableListOf<ImageView>()
                     var k = 0
                     var j = 0
 
@@ -371,6 +379,12 @@ class MainActivity : AppCompatActivity() {
 
                             val parentView = findViewById<ConstraintLayout>(R.id.parent_layout)
                             parentView.addView(rect[k])
+
+                            // Generate a unique ID for the ImageView
+                            var id = View.generateViewId();
+
+                            // Set the ID for the ImageView
+                            rect[k].id = id;
 
 
                             params.topMargin = marginY + gapY*i + firstImageView.height*i
@@ -414,8 +428,12 @@ class MainActivity : AppCompatActivity() {
                                     obstacleRectEdges[k].bottom-= (1-scale)*height/2
                                     obstacleRectEdges[k].right-= (1-scale)*width/2
                                     obstacleRectEdges[k].left+= (1-scale)*width/2
+                                    obstacleRectEdges[k].id = rect[k].id
                                 }
-
+                                var idToRemove = firstImageView.id
+                                val viewToRemove = findViewById<ImageView>(idToRemove)
+                                val parentView = findViewById<ConstraintLayout>(R.id.parent_layout)
+                                parentView.removeView(viewToRemove)
                             }
                         }
                     )
@@ -427,23 +445,53 @@ class MainActivity : AppCompatActivity() {
         //Log.d("Trying to get width", "firstImageView.width = ${firstImageView.width}")
 
 
+
+        return rect
+    }
+
+    fun eliminateObstacle(index: Int, obstacles: MutableList<ImageView>) {
+        var removedIndexes: MutableList<Int> = mutableListOf()
+        val parentView = findViewById<ConstraintLayout>(R.id.parent_layout)
+
+        //parentView.removeView(obstacles[index])
+        //obstacles.removeAt(index)
+
+
+
+        var idToRemove = obstacleRectEdges[index].id
+        val viewToRemove = findViewById<ImageView>(idToRemove)
+        parentView.removeView(viewToRemove)
+
+        obstacleRectEdges.removeAt(index)
+        //parentView.removeView(obstacles[index])
+
+
+
     }
 
 
 
-    fun updateBallPosition(ball: ImageView, screenHeight: Int, screenWidth: Int, paddle: ImageView) {
+    fun updateBallPosition(ball: ImageView, screenHeight: Int, screenWidth: Int, paddle: ImageView, obstacles: MutableList<ImageView>) {
 
 
+        var collisionIndex = -1 //-1 means there was no collision
         bounceInPaddle(ball, paddle)
-        collision(ball)
+        collisionIndex = collision(ball)
         bounceInScreenSides(ball, screenHeight, screenWidth)
 
         moveBall(ball, ballSpeed)
+
+        if(collisionIndex > -1) {
+            eliminateObstacle(collisionIndex, obstacles)
+        }
+
 
 
     }
 
 }
+
+
 
 fun moveBall(ball: ImageView, ballSpeed: Speed) {
 
