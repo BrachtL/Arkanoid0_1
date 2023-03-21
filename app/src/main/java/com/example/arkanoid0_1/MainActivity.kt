@@ -21,6 +21,8 @@ private const val updateInterval = 16L // Update every 16 milliseconds (approx. 
 private var standardSpeedY = 6
 private var standardSpeedX = 6
 
+var ballSpeed = Speed(standardSpeedX, standardSpeedY)
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,31 +50,29 @@ class MainActivity : AppCompatActivity() {
         window.decorView.systemUiVisibility = immersiveFlags
     }
 
-    // TODO: Implement this collision function
-    // TODO: gravei um vídeo mostrando uma colisão com standardSpeedX negativo e standardSpeedY positivo que não aconteceu, verificar
-    fun collision(ball: ImageView): Boolean{
+    fun collision(ball: ImageView): Boolean {
         var ballLocation = mutableListOf<Float>(ball.x, ball.y)
         var ballEdges = RectEdges(ball, ballLocation)
 
         for (i in 0 until obstacleRectEdges.size) {
-            //the +1 or -1 in (standardSpeedY / 2 - 1) are been used because it is better the ball going deeper into the obstacle than bouncing earlier
+            //the +1 or -1 in (ballSpeed.y / 2 - 1) are been used because it is better the ball going deeper into the obstacle than bouncing earlier
             //maybe it could be removed
 
 
-            if(standardSpeedY > 0) { //going down
-                    //standardSpeedY / 2 - 1
-                    if(ballEdges.bottom + (standardSpeedY / 2 - 1) >= obstacleRectEdges[i].top && ballEdges.bottom <= obstacleRectEdges[i].top || ballEdges.bottom >= obstacleRectEdges[i].top && ballEdges.bottom - standardSpeedY <= obstacleRectEdges[i].top) {
-                        if(ballEdges.right + standardSpeedX >= obstacleRectEdges[i].left && ballEdges.left + standardSpeedX <= obstacleRectEdges[i].right) {
-                            standardSpeedY = -standardSpeedY
+            if(ballSpeed.y > 0) { //going down
+                    //ballSpeed.y / 2 - 1
+                    if(ballEdges.bottom + (ballSpeed.y / 2 - 1) >= obstacleRectEdges[i].top && ballEdges.bottom <= obstacleRectEdges[i].top || ballEdges.bottom >= obstacleRectEdges[i].top && ballEdges.bottom - ballSpeed.y <= obstacleRectEdges[i].top) {
+                        if(ballEdges.right + ballSpeed.x >= obstacleRectEdges[i].left && ballEdges.left + ballSpeed.x <= obstacleRectEdges[i].right) {
+                            ballSpeed.y = -ballSpeed.y
                             return true
                         }
                     }
-            } else { //standardSpeedY < 0 //going up
-                //standardSpeedY / 2 + 1
+            } else { //ballSpeed.y < 0 //going up
+                //ballSpeed.y / 2 + 1
                 //trocar os top/bottom, >/<, +1/-1
-                if(ballEdges.top + (standardSpeedY / 2 + 1) <= obstacleRectEdges[i].bottom && ballEdges.top >= obstacleRectEdges[i].bottom || ballEdges.top <= obstacleRectEdges[i].bottom && ballEdges.top - standardSpeedY >= obstacleRectEdges[i].bottom) {
-                    if(ballEdges.right + standardSpeedX >= obstacleRectEdges[i].left && ballEdges.left + standardSpeedX <= obstacleRectEdges[i].right) {
-                        standardSpeedY = -standardSpeedY
+                if(ballEdges.top + (ballSpeed.y / 2 + 1) <= obstacleRectEdges[i].bottom && ballEdges.top >= obstacleRectEdges[i].bottom || ballEdges.top <= obstacleRectEdges[i].bottom && ballEdges.top - ballSpeed.y >= obstacleRectEdges[i].bottom) {
+                    if(ballEdges.right + ballSpeed.x >= obstacleRectEdges[i].left && ballEdges.left + ballSpeed.x <= obstacleRectEdges[i].right) {
+                        ballSpeed.y = -ballSpeed.y
                         return true
                     }
                 }
@@ -84,19 +84,19 @@ class MainActivity : AppCompatActivity() {
             //top -> left
             //right -> bottom
             //left -> top
-            if(standardSpeedX > 0) { //going down
-                //standardSpeedX / 2 - 1
-                if(ballEdges.right + (standardSpeedX / 2 - 1) >= obstacleRectEdges[i].left && ballEdges.right <= obstacleRectEdges[i].left || ballEdges.right >= obstacleRectEdges[i].left && ballEdges.right - standardSpeedX <= obstacleRectEdges[i].left) {
-                    if(ballEdges.bottom + standardSpeedY >= obstacleRectEdges[i].top && ballEdges.top + standardSpeedY <= obstacleRectEdges[i].bottom) {
-                        standardSpeedX = -standardSpeedX
+            if(ballSpeed.x > 0) { //going right
+                //ballSpeed.x / 2 - 1
+                if(ballEdges.right + (ballSpeed.x / 2 - 1) >= obstacleRectEdges[i].left && ballEdges.right <= obstacleRectEdges[i].left || ballEdges.right >= obstacleRectEdges[i].left && ballEdges.right - ballSpeed.x <= obstacleRectEdges[i].left) {
+                    if(ballEdges.bottom + ballSpeed.y >= obstacleRectEdges[i].top && ballEdges.top + ballSpeed.y <= obstacleRectEdges[i].bottom) {
+                        ballSpeed.x = -ballSpeed.x
                         return true
                     }
                 }
-            } else { //standardSpeedY < 0 //going up
-                //standardSpeedX / 2 + 1
-                if(ballEdges.left + (standardSpeedX / 2 + 1) <= obstacleRectEdges[i].right && ballEdges.left >= obstacleRectEdges[i].right || ballEdges.left <= obstacleRectEdges[i].right && ballEdges.left - standardSpeedX >= obstacleRectEdges[i].right) {
-                    if(ballEdges.bottom + standardSpeedY >= obstacleRectEdges[i].top && ballEdges.top + standardSpeedY <= obstacleRectEdges[i].bottom) {
-                        standardSpeedX = -standardSpeedX
+            } else { //ballSpeed.y < 0 //going left
+                //ballSpeed.x / 2 + 1
+                if(ballEdges.left + (ballSpeed.x / 2 + 1) <= obstacleRectEdges[i].right && ballEdges.left >= obstacleRectEdges[i].right || ballEdges.left <= obstacleRectEdges[i].right && ballEdges.left - ballSpeed.x >= obstacleRectEdges[i].right) {
+                    if(ballEdges.bottom + ballSpeed.y >= obstacleRectEdges[i].top && ballEdges.top + ballSpeed.y <= obstacleRectEdges[i].bottom) {
+                        ballSpeed.x = -ballSpeed.x
                         return true
                     }
                 }
@@ -144,6 +144,55 @@ class MainActivity : AppCompatActivity() {
         generateTiles(9, 4, "rule1", screenWidth, 250,
             160, 0.6f)
 
+
+        var touchX0 = 0f
+        var isBottomHalfTouched = false
+        val parentLayout = findViewById<View>(android.R.id.content)
+        // Attach a touch listener to the parent layout
+        parentLayout.setOnTouchListener { _, motionEvent ->
+
+
+            Log.d("testing touch", "ocorreu um toque")
+            when (motionEvent.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    //this condition could be some padding around the paddle,
+                    // maybe it will be necessary when there are more things in the screen, like items
+                    if (motionEvent.y > 4*screenHeight / 5) {
+                        touchX0 = motionEvent.rawX
+                        // Touch is in the bottom half of the screen
+                        isBottomHalfTouched = true
+                        Log.d("testing touch", "tocou debaixo da tela")
+                        true // Consume the event
+                    } else {
+                        false // Don't consume the event
+                    }
+               }
+                MotionEvent.ACTION_MOVE -> {
+                    if (isBottomHalfTouched) {
+                        //Log.d("testing touch", "tocou debaixo da tela e moveu")
+                        // Move the paddle based on the amount of displacement
+                        var displacement = motionEvent.rawX - touchX0
+                        paddle.x = paddle.x + displacement
+                        touchX0 = motionEvent.rawX
+                        Log.d("testing touch", "tocou debaixo da tela e moveu")
+                        true // Consume the event
+                    } else {
+                        false // Don't consume the event
+                    }
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    Log.d("testing touch", "soltou o dedo")
+                    // Reset the touch state when the finger is lifted or canceled
+                    isBottomHalfTouched = false
+                    true // Consume the event
+                }
+                else -> false // Don't consume other touch events
+            }
+        }
+
+
+
+    /*
         paddle.setOnTouchListener { _, motionEvent ->
             when (motionEvent.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -154,14 +203,14 @@ class MainActivity : AppCompatActivity() {
                     // Handle touch move event
                     val x = motionEvent.rawX
                     // Move the paddle to the x position of the touch event
-                    paddle.x = x - paddle.width / 2
+                    paddle.x = x - paddle.width /// 2
                     //paddle.x = motionEvent.x - paddle.left - paddle.width / 2
                     true // Return true to indicate that we have consumed the event
                 }
                 else -> false // Return false for other touch events
             }
         }
-
+    */
 
 
         val ballImageView = findViewById<ImageView>(R.id.ballImage)
@@ -387,37 +436,40 @@ class MainActivity : AppCompatActivity() {
 
         bounceInPaddle(ball, paddle)
         collision(ball)
-
-
-
-        // TODO: I have to create an independent function for move..
-        // TODO: ..after check if there is an obstacle (that will change the speed sign)
         bounceInScreenSides(ball, screenHeight, screenWidth)
+
+        moveBall(ball, ballSpeed)
 
 
     }
 
 }
 
+fun moveBall(ball: ImageView, ballSpeed: Speed) {
+
+    // Move the paddle to the x position of the touch event
+    ball.x = ball.x + ballSpeed.x
+    ball.y = ball.y + ballSpeed.y
+}
+
 fun bounceInScreenSides(ball: ImageView, screenHeight: Int, screenWidth: Int) {
     var ballLocation = mutableListOf<Float>(ball.x, ball.y)
     var ballEdges = MainActivity.RectEdges(ball, ballLocation)
 
-    if(ballEdges.bottom + (standardSpeedY/2 + 1) >= screenHeight) {
-        standardSpeedY = -standardSpeedY
-    } else if(ballEdges.top + (standardSpeedY/2 - 1) <= 0) {
-        standardSpeedY = -standardSpeedY
+    if(ballEdges.bottom + (ballSpeed.y/2 + 1) >= screenHeight) {
+        ballSpeed.y = -ballSpeed.y
+    } else if(ballEdges.top + (ballSpeed.y/2 - 1) <= 0) {
+        ballSpeed.y = -ballSpeed.y
     }
 
-    if(ballEdges.right + (standardSpeedX/2 + 1) >= screenWidth) {
-        standardSpeedX = -standardSpeedX
-    } else if(ballEdges.left + (standardSpeedX/2 - 1) <= 0) {
-        standardSpeedX = -standardSpeedX
+    if(ballEdges.right + (ballSpeed.x/2 + 1) >= screenWidth) {
+        ballSpeed.x = -ballSpeed.x
+    } else if(ballEdges.left + (ballSpeed.x/2 - 1) <= 0) {
+        ballSpeed.x = -ballSpeed.x
     }
 
-    // Move the paddle to the x position of the touch event
-    ball.x = ball.x + standardSpeedX
-    ball.y = ball.y + standardSpeedY
+
+
 }
 
 //calculate the speed in order to apply() an effect in the ball
@@ -429,23 +481,28 @@ fun bounceInPaddle(ball: ImageView, paddle: ImageView) {
     var paddleLocation = mutableListOf<Float>(paddle.x, paddle.y)
     var paddleEdges = MainActivity.RectEdges(paddle, paddleLocation)
 
-    if(ballEdges.bottom + (standardSpeedY/2 + 1) >= paddleEdges.top) {
+    if(ballEdges.bottom + (ballSpeed.y/2 + 1) >= paddleEdges.top) {
         if(ballEdges.right >= paddleEdges.left && ballEdges.left <= paddleEdges.right) {
-            standardSpeedY = -standardSpeedY
+            ballSpeed.y = -ballSpeed.y
         }
     }
 }
 
-
+class Speed(standardSpeedX: Int, standardSpeedY: Int) {
+    var x: Int
+    var y: Int
+    init {
+        x = standardSpeedX
+        y = standardSpeedY
+    }
+}
 
 
 
 // TODO: change some orders in the code
 // TODO: substitute some code for functions and classes
 
-// TODO: make the touch in the bottom half side of the screen works as if touches in the paddle
-
-// TODO: create the rectCollision function
+// TODO: create the rectCollision function ??
 // TODO: create the effect of speed when the paddle touches the ball
 
 // TODO: change the bounce function not to bounce bottom
