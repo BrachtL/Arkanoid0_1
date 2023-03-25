@@ -16,27 +16,32 @@ import androidx.constraintlayout.widget.ConstraintLayout
 
 private var immersiveFlags: Int = 0
 
-//private lateinit var ballImageView: ImageView
 private lateinit var handler: Handler
 private const val updateInterval = 16L // Update every 16 milliseconds (approx. 60 FPS)
 
-private var standardSpeedY = 6
-private var standardSpeedX = 6
+var standardSpeedY = -6
+var standardSpeedX = 6
 
 val ballSpeed = Speed(standardSpeedX, standardSpeedY)
 
 
 
 class MainActivity : AppCompatActivity() {
+
+    //I cant set the imageviews here because I cant setContentView,
+    // but I need to declare here because of scope
     lateinit var paddle: ImageView
     lateinit var ballImageView: ImageView
+    lateinit var rect: MutableList<ImageView>
 
+    //I cant lateinit primitive types
     var screenHeight = 0
     var screenWidth = 0
 
-    lateinit var rect: MutableList<ImageView>
-
+    //I need to know when rectIsLoaded, because I can only
+    // start the updateBallPosition() loop when it is properly loaded
     var rectIsLoaded = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,20 +50,35 @@ class MainActivity : AppCompatActivity() {
         ballImageView = findViewById<ImageView>(R.id.ballImage)
 
 
+        // After the app call onCreate, it will call onResume,
+        //so, if I dont save it here it will load the last onPause state.
+        // I have to define what are the state the app should begin.
+        // When I save game progress, settings and other data, I would create proper
+        //save and load data for that.
+        // TODO: save settings and game progress when I have them
+        val stageState = getSharedPreferences("stageState", Context.MODE_PRIVATE)
+        val stageStateEditor = stageState.edit()
+        stageStateEditor.putInt("ballSpeedX", ballSpeed.x)
+        stageStateEditor.putInt("ballSpeedY", ballSpeed.y)
+        stageStateEditor.apply()
+
+
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
         screenHeight = displayMetrics.heightPixels
         screenWidth = displayMetrics.widthPixels
 
+
+        // for some smartphones that have a fixed nav bar, this code make the ball
+        //pass the screen bt the navBarHeight
+        // TODO: create a setting option to deactivate this
+        //  or ask in stackoverflowchatgpt if I can identify if
+        //  the navbar is part of the screen or if it is not
         val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
         if (resourceId > 0) {
             val navBarHeight = resources.getDimensionPixelSize(resourceId)
-            // Use navBarHeight as needed
-            screenWidth = screenWidth + navBarHeight
+            screenWidth += navBarHeight
         }
-
-
-
 
 
         // TODO:  I need to eliminate those magic numbers
@@ -66,13 +86,12 @@ class MainActivity : AppCompatActivity() {
             160, 0.6f)
 
 
-
-
-
+        // TODO: Maybe I will have to change this touch paddle behave
+        //  when I add items or other touch interaction.
+        //  Then I will need to consider the paddle + some padding
         var touchX0 = 0f
         var isBottomHalfTouched = false
         val parentLayout = findViewById<View>(android.R.id.content)
-        // Attach a touch listener to the parent layout
         parentLayout.setOnTouchListener { _, motionEvent ->
 
             Log.d("testing touch", "ocorreu um toque")
@@ -114,20 +133,17 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
-
         handler = Handler(Looper.getMainLooper())
 
 
         // Start the update loop
         handler.post(object : Runnable {
             override fun run() {
-                // Update the position of the ball
                 if(rectIsLoaded) {
                     updateBallPosition(ballImageView, screenHeight, screenWidth, paddle, rect)
                 }
 
-                //preciso tirar o rect do argumento do updateBallPosition()
+                //old? -> preciso tirar o rect do argumento do updateBallPosition()
                 // - será que é possível?
                 //fazer o updateBallPosition acontecer só depois de carregar os rects
 
@@ -136,7 +152,6 @@ class MainActivity : AppCompatActivity() {
                 handler.postDelayed(this, updateInterval)
             }
         })
-
 
 
         //hiding two bars and nav buttons
@@ -155,10 +170,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        //every state I save here, probably I will have to set on the onCreate too
 
+        //* moved to MainActivity
         // Save the current state of the app to SharedPreferences
         val stageState = getSharedPreferences("stageState", Context.MODE_PRIVATE)
         val stageStateEditor = stageState.edit()
+        //*/
 
 
         //stageStateEditor.putFloat("ballX", ballImageView.x)
@@ -170,17 +188,10 @@ class MainActivity : AppCompatActivity() {
         ballSpeed.x = 0
         ballSpeed.y = 0
 
-
         //stageStateEditor.putFloat("paddleX", findViewById<ImageView>(R.id.paddleImage).x) //nao consigo usar a variável paddle...
         //stageStateEditor.putFloat("paddleY", paddle.y)
 
-
-
-
-
-
         // ... save other state variables ...
-
 
 
         stageStateEditor.apply()
@@ -190,9 +201,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         // TODO: implementar o que está nos comentários abaixo 
-        //tem que cuidar que essa função carrega logo depois da onCreate, ou seja, antes de pausar alguma vez
-        //é importante setar os padrões aqui na primeira vez que carrega
-        //if(controle) {carregar padrões com stageStateEditor.putFloat("ballX", ballImageView.x), entre outros}
+        // tem que cuidar que essa função carrega logo depois da onCreate,
+        //carregando o state do último pause se eu não colocar nada no onCreate
 
 
         // Re-apply immersive flags when the activity resumes
@@ -213,13 +223,11 @@ class MainActivity : AppCompatActivity() {
 
         //ballSpeed.x = stageState.getInt("ballSpeedX", 0)
 
-        // ... retrieve other state variables ...
-
         // ... restore other state variables ...
-
 
     }
 
+    // TODO: Reviewed and comented until here
     fun collision(ball: ImageView): Int {
         var ballLocation = mutableListOf<Float>(ball.x, ball.y)
         var ballEdges = RectEdges(ball, ballLocation)
@@ -685,11 +693,21 @@ fun bounceInPaddle(ball: ImageView, paddle: ImageView) {
     var paddleLocation = mutableListOf<Float>(paddle.x, paddle.y)
     var paddleEdges = MainActivity.RectEdges(paddle, paddleLocation)
 
+    /*
     if(ballEdges.bottom + (ballSpeed.y/2 + 1) >= paddleEdges.top) {
         if(ballEdges.right >= paddleEdges.left && ballEdges.left <= paddleEdges.right) {
             ballSpeed.y = -ballSpeed.y
         }
     }
+    */
+
+
+    if(ballEdges.bottom + (ballSpeed.y / 2 - 1) >= paddleEdges.top && ballEdges.bottom <= paddleEdges.top || ballEdges.bottom >= paddleEdges.top && ballEdges.bottom - ballSpeed.y <= paddleEdges.top) {
+        if(ballEdges.right + ballSpeed.x >= paddleEdges.left && ballEdges.left + ballSpeed.x <= paddleEdges.right) {
+            ballSpeed.y = -ballSpeed.y
+        }
+    }
+
 }
 
 class Speed(standardSpeedX: Int, standardSpeedY: Int) {
@@ -738,5 +756,10 @@ class Speed(standardSpeedX: Int, standardSpeedY: Int) {
 
 // TODO: Adicionar mecânica que cria um contorno para o paddle e se o paddle ficar tempo ali dentro ganha alguma coisa:
 //  item, pontos, destrói peça, dá golpe em chefão, etc
+
+// TODO: limpar o código: adicionar comentários, excluir comentários, confirmar o local das coisas
+// TODO: refatorar o código: considerar a criação de classes e funções
+
+
 
 
